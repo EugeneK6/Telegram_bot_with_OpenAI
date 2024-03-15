@@ -1,0 +1,325 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false,
+          "values": []
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+          },
+          "editorMode": "builder",
+          "expr": "sum by(level) (count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt | level =~ `.+` [$__auto]))",
+          "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Logs levels",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "level": ""
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 5,
+        "x": 6,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false,
+          "values": []
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+          },
+          "editorMode": "builder",
+          "expr": "sum by(logger) (count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt | logger =~ `.+` [$__auto]))",
+          "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Logger data",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {}
+        }
+      ],
+      "transparent": true,
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 11,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt[15d]))",
+          "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Number of all logs",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 18,
+        "x": 0,
+        "y": 11
+      },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+          },
+          "editorMode": "builder",
+          "expr": "{filename=\"/logs/bot.log\"} |= `$filter` | logfmt",
+          "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "New Panel",
+      "type": "logs"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "name": "filter",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Telegram bot logs",
+  "uid": "da24d3b5-25ba-4abe-959f-f615e4759a22",
+  "version": 3,
+  "weekStart": ""
+}

@@ -1,0 +1,36 @@
+version: "3.9"
+
+volumes:
+  logs_volume: {}
+
+services:
+  telegram-bot:
+    build:
+      context: ./Telegram_bot
+    restart: no
+    env_file:
+      - ./telegram_bot/.env
+    volumes:
+      - logs_volume:/app/logs
+
+  # http://loki-local:3100
+  loki-local:
+    image: grafana/loki:2.7.0
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    volumes:
+      - ./grafana:/etc/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki-local
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    volumes:
+      - logs_volume:/logs
+      - ./promtail:/etc/promtail
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki-local

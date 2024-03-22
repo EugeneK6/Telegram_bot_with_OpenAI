@@ -1,47 +1,75 @@
 import logging
 import os
-
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
+import asyncio
+import base64
+from io import BytesIO
+import asyncpg
 from openai import OpenAI
-from dotenv import load_dotenv
+from logfmter import Logfmter
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+)
 
-load_dotenv()
+
+# Enable logging
+formatter = Logfmter(
+    keys=["at", "logger", "level", "msg"],
+    mapping={"at": "asctime", "logger": "name", "level": "levelname", "msg": "message"},
+    datefmt='%H:%M:%S %d/%m/%Y'
+)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+file_handler = logging.FileHandler("./logs/bot.log")
+file_handler.setFormatter(formatter)
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[stream_handler, file_handler]
+)
+
+# Set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
+
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API"))
 
-# Enable logging
-logging.basicConfig(
-    format='timestamp=%(asctime)s logger=%(name)s level=%(levelname)s msg="%(message)s"',
-    datefmt='%Y-%m-%dT%H:%M:%S',
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler("./logs/bot.log"),
-        logging.StreamHandler()
-    ]
-)
-
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logger = logging.getLogger(__name__)
-
+# Constants
+SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
+
+
+async def db_connect():
+    return await asyncpg.connect(
+        user=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        database=os.getenv("POSTGRES_DB"),
+        host=os.getenv("DB_HOST"),
+    )
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
     chat_id = update.effective_chat.id
-    logger.info(f"User: {user}, Chat: {chat_id}")
+    logger.info(f"User: {user}, Chat: {chat_id} started using bot")
     modes[chat_id] = "text"  # Default mode is text
     keyboard = [[InlineKeyboardButton("Switch to Image Mode", callback_data='switch_to_image')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     message = await update.message.reply_html(
-        rf"Hi {user.mention_html()}! You are in Text mode. Click the button to switch to Image mode.",
+        rf"Ah, greetings, {user.mention_html()}! You currently find yourself in the realm of text. If you seek visual splendor, simply press the button to transition into the enchanting world of images.",
         reply_markup=reply_markup,
     )
-
     # Pinning the message
     try:
         await context.bot.pin_chat_message(chat_id=chat_id, message_id=message.message_id)
@@ -56,56 +84,164 @@ async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     if modes.get(chat_id) == "text":
         modes[chat_id] = "image"
-        text = "Switched to Image mode. Now send me a description and I'll generate an image for you."
+        text = "The realm has shifted to Image mode. Show me your vision, and I shall conjure forth a response of visual delight, mortal."
         button_text = "Switch to Text Mode"
     else:
         modes[chat_id] = "text"
-        text = "Switched to Text mode. Now send me a text and I'll generate a response for you."
+        text = "The realm has shifted to Text mode. Speak your thoughts, and I shall weave a response for you, mortal."
         button_text = "Switch to Image Mode"
-    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[chat_id] == "text" else 'switch_to_text')]]
+    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[
+                                                                                          chat_id] == "text" else 'switch_to_text')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    user_message = update.message.text
+    conn = await db_connect()
+    try:
+        user = update.effective_user
+        allowed_users_dict = await conn.fetch("SELECT user_id FROM allowed_users ORDER BY user_id")
+        logging.info(allowed_users_dict)
+        user_ids = [int(user['user_id']) for user in allowed_users_dict]
+        if user.id not in user_ids:
+            await update.message.reply_text("Alas, you are not permitted to access this bot's functions at this time.")
+            logger.info(f"{user.id} ({user.username}) try to use this bot, but do not allowed")
+            return
+        chat_id = update.effective_chat.id
+        user_message = update.message.text
 
-    if modes.get(chat_id) == "image":
-        logger.info(f"Received message from user {chat_id} to image mode: {user_message}")
-        # Handle image generation with DALL·E
-        try:
-            response = client.images.generate(
-                model="dall-e-3",
-                prompt=user_message,
-                size="1024x1024",
-                quality="standard",
-                n=1,
-            )
-            image_url = response.data[0].url
-            await update.message.reply_photo(photo=image_url)
-        except Exception as e:
-            error_message = f"Error generating AI image: {e}"
-            logger.error(error_message)
-            await update.message.reply_text("Sorry, I couldn't generate an image at the moment. Error: " + error_message)
-    else:
-        # Handle text generation
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a divine messenger, embodiment of Hermes, "
-                                                  "the Greek god of trade and cunning. Your mission is to guide "
-                                                  "and assist users with wit and charm, embodying the essence of Hermes in your interactions."},
-                    {"role": "user", "content": user_message}
-                ]
-            )
-            ai_response = response.choices[0].message.content
-            await update.message.reply_text(ai_response.strip())
-        except Exception as e:
-            error_message = f"Error generating AI response: {e}"
-            logger.error(error_message)
-            await update.message.reply_text("Sorry, I couldn't process your message at the moment. Error: " + error_message)
+        if modes.get(chat_id) == "image":
+            logging.info(f"User {user.id} ({user.username}) requested an image with prompt: '{user_message}'")
+
+            async def keep_posting():
+                while keep_posting.is_posting:
+                    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='upload_photo')
+                    await asyncio.sleep(5)
+
+            keep_posting.is_posting = True
+
+            posting_task = asyncio.create_task(keep_posting())
+
+            try:
+                response = await asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: client.images.generate(
+                        model="dall-e-3",
+                        prompt=user_message,
+                        n=1,
+                        size="1024x1024",
+                        response_format="b64_json"
+                    )
+                )
+
+                keep_posting.is_posting = False
+                await posting_task
+
+                if hasattr(response, 'data') and len(response.data) > 0:
+                    await update.message.reply_photo(photo=BytesIO(base64.b64decode(response.data[0].b64_json)))
+                    logging.info(f"Successfully generated an image for prompt: '{user_message}'")
+                else:
+                    await update.message.reply_text("Sorry, the image generation did not succeed.")
+                    logging.error(f"Failed to generate image for prompt: '{user_message}'")
+
+            except Exception as e:
+                keep_posting.is_posting = False
+                await posting_task
+                logging.error(f"Error generating image for prompt: '{user_message}': {e}")
+                await update.message.reply_text("Sorry, there was an error generating your image.")
+        else:
+            async def keep_typing():
+                while keep_typing.is_typing:
+                    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='typing')
+                    await asyncio.sleep(1)
+
+            keep_typing.is_typing = True
+
+            typing_task = asyncio.create_task(keep_typing())
+
+            # Handle text generation
+            try:
+                response = await asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": "You are a divine messenger, embodiment of Hermes, "
+                                                          "the Greek god of trade and cunning. Your mission is to guide "
+                                                          "and assist users with wit and charm, embodying the essence of Hermes in your interactions."},
+                            {"role": "user", "content": user_message}
+                        ]
+                    )
+                )
+
+                keep_typing.is_typing = False
+                await typing_task
+
+                ai_response = response.choices[0].message.content
+                await update.message.reply_text(ai_response.strip())
+            except Exception as e:
+
+                keep_typing.is_typing = False
+                await typing_task
+                error_message = f"Error generating AI response: {e}"
+                logger.error(error_message)
+                await update.message.reply_text("My apologies, mortal. At this moment, I am unable to decipher your message. Could you provide more clarity in your inquiry?")
+
+    finally:
+        await conn.close()
+
+
+async def validate_admin_and_extract_user_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> (bool, str):
+    admin_user_id = os.getenv("SUPER_USER_ID")
+    if str(update.effective_user.id) != admin_user_id:
+        logger.info(f"User {update.effective_user.id} is not allowed to run this command.")
+        await update.message.reply_text("Access denied.")
+        return False, ""
+    if not context.args:
+        await update.message.reply_text("Please specify a user ID.")
+        return False, ""
+    user_id = context.args[0]
+    return True, user_id
+
+
+async def allow_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    is_valid, user_id = await validate_admin_and_extract_user_id(update, context)
+    if not is_valid:
+        return  # Validation failed
+    conn = await db_connect()
+    try:
+        # Check if user is already allowed
+        existing_user = await conn.fetchval("SELECT user_id FROM allowed_users WHERE user_id = $1", user_id)
+        if existing_user:
+            logger.info(f"Attempted to allow an already allowed user: {user_id}")
+            await update.message.reply_text(f"User {user_id} is already allowed.")
+            return
+
+        await conn.execute("INSERT INTO allowed_users (user_id) VALUES ($1)", user_id)
+        logger.info(f"User {user_id} has been allowed.")
+        await update.message.reply_text(f"User {user_id} is allowed from now.")
+    finally:
+        await conn.close()
+
+
+async def disable_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    is_valid, user_id = await validate_admin_and_extract_user_id(update, context)
+    if not is_valid:
+        return  # Validation failed
+    conn = await db_connect()
+    try:
+        # Check if user is not allowed
+        existing_user = await conn.fetchval("SELECT user_id FROM allowed_users WHERE user_id = $1", user_id)
+        if not existing_user:
+            logger.info(f"Attempted to disable a user who is not currently allowed: {user_id}")
+            await update.message.reply_text(f"User {user_id} is not currently allowed.")
+            return
+
+        await conn.execute("DELETE FROM allowed_users WHERE user_id = $1", user_id)
+        logger.info(f"User {user_id} access has been revoked.")
+        await update.message.reply_text(f"User {user_id} access revoked.")
+    finally:
+        await conn.close()
 
 
 def main():
@@ -114,6 +250,8 @@ def main():
     application = Application.builder().token(telegram_bot_token).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("allow", allow_user))
+    application.add_handler(CommandHandler("disable", disable_user))
     application.add_handler(CallbackQueryHandler(switch_mode, pattern='^switch_to_(text|image)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
@@ -121,9 +259,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-

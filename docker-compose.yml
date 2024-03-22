@@ -2,29 +2,43 @@ version: "3.9"
 
 volumes:
   logs_volume: {}
+  postgres_data: {}
 
 services:
   telegram-bot:
     build:
       context: ./Telegram_bot
     restart: no
-    env_file:
-      - ./telegram_bot/.env
     volumes:
       - logs_volume:/app/logs
+    environment:
+      OPENAI_API: ${OPENAI_API}
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      SUPER_USER_ID: ${SUPER_USER_ID}
+
+      DB_HOST: ${DB_HOST}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
 
   # http://loki-local:3100
   loki-local:
-    image: grafana/loki:2.7.0
+    image: grafana/loki:2.9.5
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml
 
   grafana:
     image: grafana/grafana:10.2.0
     volumes:
-      - ./grafana:/etc/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
     ports:
       - "3000:3000"
     depends_on:
       - loki-local
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+
 
   promtail:
     image: grafana/promtail:2.9.3
@@ -34,3 +48,26 @@ services:
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki-local
+
+  postgres:
+    image: postgres:16.2
+    ports:
+      - "5432:5432"
+    environment:
+      DB_HOST: ${DB_HOST}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+  liquibase:
+    build: ./liquibase
+    command: [
+      "--changeLogFile=initial.postgres.yaml",
+      "--url=jdbc:postgresql://${DB_HOST}:5432/${POSTGRES_DB}",
+      "update"
+    ]
+    environment:
+      LIQUIBASE_COMMAND_USERNAME: ${POSTGRES_USER}
+      LIQUIBASE_COMMAND_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      - postgres

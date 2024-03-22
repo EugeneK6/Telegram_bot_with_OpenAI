@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+        "uid": "${Data_source}"
       },
       "description": "",
       "fieldConfig": {
@@ -40,9 +40,41 @@
               "viz": false
             }
           },
-          "mappings": []
+          "mappings": [],
+          "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "INFO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 11,
@@ -57,9 +89,9 @@
         ],
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
-          "placement": "right",
-          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
           "values": []
         },
         "pieType": "pie",
@@ -80,11 +112,12 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+            "uid": "${Data_source}"
           },
           "editorMode": "builder",
           "expr": "sum by(level) (count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt | level =~ `.+` [$__auto]))",
           "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
+          "legendFormat": "",
           "queryType": "instant",
           "refId": "A"
         }
@@ -108,7 +141,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+        "uid": "${Data_source}"
       },
       "description": "",
       "fieldConfig": {
@@ -125,7 +158,47 @@
           },
           "mappings": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Value #A"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "telegram.ext.Updater"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 11,
@@ -140,9 +213,9 @@
         ],
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
-          "placement": "right",
-          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
           "values": []
         },
         "pieType": "pie",
@@ -163,7 +236,7 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+            "uid": "${Data_source}"
           },
           "editorMode": "builder",
           "expr": "sum by(logger) (count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt | logger =~ `.+` [$__auto]))",
@@ -185,7 +258,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+        "uid": "${Data_source}"
       },
       "fieldConfig": {
         "defaults": {
@@ -196,10 +269,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -216,7 +285,7 @@
       "id": 5,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
@@ -226,6 +295,9 @@
           "fields": "",
           "values": false
         },
+        "text": {
+          "titleSize": 1
+        },
         "textMode": "auto"
       },
       "pluginVersion": "10.2.0",
@@ -233,10 +305,10 @@
         {
           "datasource": {
             "type": "loki",
-            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+            "uid": "${Data_source}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt[15d]))",
+          "expr": "sum(count_over_time({filename=\"/logs/bot.log\"} |= `$filter` | logfmt[$__auto]))",
           "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
           "queryType": "range",
           "refId": "A"
@@ -249,7 +321,7 @@
     {
       "datasource": {
         "type": "loki",
-        "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+        "uid": "${Data_source}"
       },
       "gridPos": {
         "h": 9,
@@ -266,17 +338,17 @@
         "showLabels": false,
         "showTime": false,
         "sortOrder": "Descending",
-        "wrapLogMessage": false
+        "wrapLogMessage": true
       },
       "pluginVersion": "10.2.0",
       "targets": [
         {
           "datasource": {
             "type": "loki",
-            "uid": "e241a092-1d82-4a50-a033-d080fbc04f1a"
+            "uid": "${Data_source}"
           },
-          "editorMode": "builder",
-          "expr": "{filename=\"/logs/bot.log\"} |= `$filter` | logfmt",
+          "editorMode": "code",
+          "expr": "{filename=\"/logs/bot.log\"} | logfmt | msg =~ `.*$filter.*` ",
           "key": "Q-4c375fc5-c410-4b51-be92-ce32f9c94f88-0",
           "queryType": "range",
           "refId": "A"
@@ -309,17 +381,35 @@
         "query": "",
         "skipUrlSync": false,
         "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Loki Local",
+          "value": "P639F1043A754246A"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data_source",
+        "multi": false,
+        "name": "Data_source",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
       }
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Telegram bot logs",
   "uid": "da24d3b5-25ba-4abe-959f-f615e4759a22",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

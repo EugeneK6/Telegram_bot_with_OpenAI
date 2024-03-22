@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Eugene
+      changes:
+        - createTable:
+            tableName: allowed_users
+            columns:
+              - column:
+                  name: user_id
+                  type: VARCHAR(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false

@@ -1,2 +1,4 @@
 .idea
+postgresql/.env
+grafana/.env
 Telegram_bot/.env

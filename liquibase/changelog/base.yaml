@@ -8,38 +8,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: user_id
-                  type: INT
+                  type: VARCHAR(255)
                   constraints:
                     primaryKey: true
                     nullable: false
-
-  - changeSet:
-      id: 2
-      author: Eugene
-      changes:
-        - createTable:
-            tableName: user_credit
-            columns:
-              - column:
-                  name: user_id
-                  type: INT
-                  constraints:
-                    primaryKey: true
-              - column:
-                  name: balance
-                  type: NUMERIC(10,2)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: images_generated
-                  type: INT
-                  constraints:
-                    nullable: false
-                    defaultValueNumeric: 0
-        - addForeignKeyConstraint:
-            baseTableName: user_credit
-            baseColumnNames: user_id
-            constraintName: fk_user_credit_user_id
-            referencedTableName: allowed_users
-            referencedColumnNames: user_id
-            onDelete: CASCADE

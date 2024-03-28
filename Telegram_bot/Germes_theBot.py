@@ -39,10 +39,9 @@ logger = logging.getLogger(__name__)
 
 """Environments"""
 client = OpenAI(api_key=os.getenv("OPENAI_API"))
-
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
-
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
+
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
@@ -219,74 +218,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await conn.close()
 
 
-async def validate_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> (bool, str):
-    admin_user_id = int(os.getenv("SUPER_USER_ID"))
-    if update.effective_user.id != admin_user_id:
-        logger.info(f"User {update.effective_user.id} is not allowed to run this command.")
-        await update.message.reply_text("Access denied.")
-        return False
-    return True
-
-
-async def allow_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    is_admin = await validate_admin(update, context)
-    if not is_admin:
-        return
-    if not context.args:
-        await update.message.reply_text("Please specify a user ID.")
-        return
-    try:
-        user_id_to_allow = int(context.args[0])
-    except ValueError:
-        await update.message.reply_text("Invalid user ID format. Please provide a valid user ID.")
-        return
-    conn = await db_connect()
-    try:
-        # Check if user is already allowed
-        existing_user = await conn.fetchval("SELECT user_id FROM allowed_users WHERE user_id = $1",
-                                            int(user_id_to_allow))
-        if existing_user:
-            logger.info(f"Attempted to allow an already allowed user: {user_id_to_allow}")
-            await update.message.reply_text(f"User {user_id_to_allow} is already allowed.")
-            return
-
-        await conn.execute("INSERT INTO allowed_users (user_id) VALUES ($1)", int(user_id_to_allow))
-        logger.info(f"User {user_id_to_allow} has been allowed.")
-        await update.message.reply_text(f"User {user_id_to_allow} is allowed from now.")
-    finally:
-        await conn.close()
-
-
-async def disable_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    is_admin = await validate_admin(update, context)
-    if not is_admin:
-        return
-    if not context.args:
-        await update.message.reply_text("Please specify a user ID.")
-        return
-    try:
-        user_id_to_disable = int(context.args[0])
-    except ValueError:
-        await update.message.reply_text("Invalid user ID format. Please provide a valid user ID.")
-        return
-    conn = await db_connect()
-    try:
-        # Check if user is not allowed
-        existing_user = await conn.fetchval("SELECT user_id FROM allowed_users WHERE user_id = $1",
-                                            int(user_id_to_disable))
-        if not existing_user:
-            logger.info(f"Attempted to disable a user who is not currently allowed: {user_id_to_disable}")
-            await update.message.reply_text(f"User {user_id_to_disable} is not currently allowed.")
-            return
-
-        await conn.execute("DELETE FROM allowed_users WHERE user_id = $1", int(user_id_to_disable))
-        logger.info(f"User {user_id_to_disable} access has been revoked.")
-        await update.message.reply_text(f"User {user_id_to_disable} access revoked.")
-    finally:
-        await conn.close()
-
-
-
 async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:
@@ -317,8 +248,6 @@ def main():
     application = Application.builder().token(telegram_bot_token).build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("allow", allow_user))
-    application.add_handler(CommandHandler("disable", disable_user))
     application.add_handler(CommandHandler("balance", show_balance))
     application.add_handler(CallbackQueryHandler(switch_mode, pattern='^switch_to_(text|image)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))

@@ -43,3 +43,26 @@ databaseChangeLog:
             referencedTableName: allowed_users
             referencedColumnNames: user_id
             onDelete: CASCADE
+
+  - changeSet:
+      id: 3
+      author: Eugene
+      changes:
+        - createTable:
+            tableName: identified_user
+            columns:
+              - column:
+                  name: user_id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)

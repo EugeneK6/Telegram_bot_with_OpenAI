@@ -56,11 +56,30 @@ async def db_connect():
     )
 
 
+async def save_user_to_db(conn, user_id, username, first_name=None, last_name=None):
+    try:
+        # Проверяем, есть ли пользователь уже в базе данных
+        existing_user = await conn.fetchrow("SELECT user_id FROM identified_user WHERE user_id = $1", user_id)
+        if existing_user:
+            return
+        await conn.execute(
+            "INSERT INTO identified_user (user_id, username, first_name, last_name) VALUES ($1, $2, $3, $4)",
+            user_id, username, first_name, last_name
+        )
+    except Exception as e:
+        logger.error(f"Error saving user to database: {e}")
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
     chat_id = update.effective_chat.id
     logger.info(f"User: {user}, Chat: {chat_id} started using bot")
+
+    conn = await db_connect()
+    await save_user_to_db(conn, user.id, user.username, user.first_name, user.last_name)
+    await conn.close()
+
     modes[chat_id] = "text"  # Default mode is text
     keyboard = [[InlineKeyboardButton("Switch to Image Mode", callback_data='switch_to_image')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -98,20 +117,22 @@ async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:
-        user = update.effective_user
-        allowed_users_dict = await conn.fetch("SELECT user_id FROM allowed_users ORDER BY user_id")
-        logging.info(allowed_users_dict)
-        user_ids = [int(user['user_id']) for user in allowed_users_dict]
-        is_admin_user = user.id == SUPER_USER_ID
-        if user.id not in user_ids:
-            await update.message.reply_text("Alas, you are not permitted to access this bot's functions at this time.")
-            logger.info(f"{user.id} ({user.username}) tried to use this bot but is not allowed")
-            return
 
         chat_id = update.effective_chat.id
         user_message = update.message.text
 
         if modes.get(chat_id) == "image":
+
+            user = update.effective_user
+            allowed_users_dict = await conn.fetch("SELECT user_id FROM allowed_users ORDER BY user_id")
+            user_ids = [int(user['user_id']) for user in allowed_users_dict]
+            is_admin_user = user.id == SUPER_USER_ID
+            if user.id not in user_ids:
+                await update.message.reply_text(
+                    "Alas, you are not permitted to access image mod functions at this time.")
+                logger.info(f"{user.id} ({user.username}) tried to use image mod but is not allowed")
+                return
+
             logging.info(f"User {user.id} ({user.username}) requested an image with prompt: '{user_message}'")
 
             if not is_admin_user:

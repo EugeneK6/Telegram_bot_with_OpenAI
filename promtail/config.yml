@@ -1,3 +1,6 @@
+positions:
+  filename: /logs/positions.yaml
+
 clients:
   - url: http://loki-local:3100/loki/api/v1/push
 
@@ -8,3 +11,9 @@ scrape_configs:
           - localhost
         labels:
           __path__: /logs/bot.log
+  - job_name: user-manager
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          __path__: /logs/user-manager.log

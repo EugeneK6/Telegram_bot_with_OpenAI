@@ -66,3 +66,20 @@ databaseChangeLog:
               - column:
                   name: last_name
                   type: varchar(255)
+
+  - changeSet:
+      id: 4
+      author: Eugene
+      changes:
+        - addColumn:
+            tableName: allowed_users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)
+        - addColumn:
+            tableName: user_credit
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)

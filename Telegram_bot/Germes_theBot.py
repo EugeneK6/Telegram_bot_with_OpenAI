@@ -256,7 +256,7 @@ async def allow_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     finally:
         await conn.close()
 
-
+# disable user
 async def disable_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     is_admin = await validate_admin(update, context)
     if not is_admin:

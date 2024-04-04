@@ -6,11 +6,11 @@ server:
 
 common:
   instance_addr: 127.0.0.1
-  path_prefix: /tmp/loki
+  path_prefix: /loki/data
   storage:
     filesystem:
-      chunks_directory: /tmp/loki/chunks
-      rules_directory: /tmp/loki/rules
+      chunks_directory: /loki/data/chunks
+      rules_directory: /loki/data/rules
   replication_factor: 1
   ring:
     kvstore:
@@ -35,6 +35,9 @@ schema_config:
 
 query_scheduler:
   max_outstanding_requests_per_tenant: 10000
+
+limits_config:
+  max_query_length: 360d
 
 ruler:
   alertmanager_url: http://localhost:9093

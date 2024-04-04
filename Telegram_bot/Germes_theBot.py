@@ -133,7 +133,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.info(f"{user.id} ({user.username}) tried to use image mod but is not allowed")
                 return
 
-            logging.info(f"User {user.id} ({user.username}) requested an image with prompt: '{user_message}'")
+            logger.info(f"User {user.id} ({user.username}) requested an image with prompt: '{user_message}'")
 
             if not is_admin_user:
                 # Check user's credit balance
@@ -147,17 +147,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 images_generated = user_data["images_generated"]
 
                 # Check if user has enough balance for the image
+                balance = float(balance)  # Преобразование в тип float
                 if balance + IMAGE_PRICE > 10.00:
                     await update.message.reply_text(
-                        "You have exceeded your credit limit. Please contact support for assistance.")
+                        "You have exceeded your credit limit. Please contact support for assistance."
+                    )
                     logger.info(f"User {user.id} ({user.username}) exceeded credit limit")
                     return
 
                 async with conn.transaction():
-                    # Deduct image price from user's balance and increment images_generated count
                     await conn.execute(
-                        "UPDATE user_credit SET balance = balance + $1, images_generated = images_generated + 1 WHERE user_id = $2",
-                        IMAGE_PRICE, user.id)
+                        "UPDATE user_credit SET balance = balance + $1, images_generated = images_generated + 1 "
+                        "WHERE user_id = $2",
+                        IMAGE_PRICE, user.id
+                    )
 
             # Generate and send the image
             async def keep_posting():
@@ -243,22 +246,33 @@ async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:
         user_id = update.effective_user.id
-        user_data = await conn.fetchrow("SELECT * FROM user_credit WHERE user_id = $1", user_id)
+        user_data = await conn.fetchrow("SELECT user_id, balance, images_generated FROM user_credit WHERE user_id = $1", user_id)
         if user_data:
-            balance = user_data["balance"]
-            images_generated = user_data["images_generated"]
+            balance = user_data.get("balance")
+            images_generated = user_data.get("images_generated")
             is_admin_user = user_id == SUPER_USER_ID
 
-            if is_admin_user:
-                await update.message.reply_text("Behold, as the master of this bot, you wield an infinite credit limit,"
-                                                "granting you boundless power within its realms.")
+            if balance is not None:
+                if is_admin_user:
+                    await update.message.reply_text(
+                        "Behold, as the master of this bot, you wield an infinite credit limit, "
+                        "granting you boundless power within its realms."
+                    )
+                else:
+                    await update.message.reply_text(
+                        f"Behold, mortal! Your credit balance stands at ${balance:.2f}/10$, "
+                        f"with {images_generated} images already conjured forth from the depths of imagination."
+                    )
             else:
                 await update.message.reply_text(
-                    f"Behold, mortal! Your credit balance stands at ${balance:.2f}/10$, "
-                    f"with {images_generated} images already conjured forth from the depths of imagination.")
+                    "Alas, no records of credit balance grace your account as of now. "
+                    "Craft your first masterpiece to activate your balance."
+                )
         else:
-            await update.message.reply_text("Alas, no records of credit balance grace your account as of now.  "
-                                            "Craft  your first masterpiece to activate your balance.")
+            await update.message.reply_text(
+                "Alas, no records of credit balance grace your account as of now. "
+                "Craft your first masterpiece to activate your balance."
+            )
     finally:
         await conn.close()
 

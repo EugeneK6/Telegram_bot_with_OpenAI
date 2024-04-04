@@ -286,7 +286,7 @@ async def disable_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await conn.close()
 
 
-# function that show user balance
+
 async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:

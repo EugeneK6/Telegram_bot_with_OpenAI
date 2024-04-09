@@ -55,7 +55,7 @@ async def db_connect():
         host=os.getenv("DB_HOST"),
     )
 
-
+# function saves new user's data to database
 async def save_user_to_db(conn, user_id, username, first_name=None, last_name=None):
     try:
         # Проверяем, есть ли пользователь уже в базе данных
@@ -214,11 +214,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 response = await asyncio.get_running_loop().run_in_executor(
                     None,
                     lambda: client.chat.completions.create(
-                        model="gpt-3.5-turbo",
+                        model="gpt-4-turbo-preview",
                         messages=[
-                            {"role": "system", "content": "You are a divine messenger, embodiment of Hermes, "
-                                                          "the Greek god of trade and cunning. Your mission is to guide "
-                                                          "and assist users with wit and charm, embodying the essence of Hermes in your interactions."},
+                            {"role": "system", "content": "You are a useful assistant for solving mathematics and cryptographic problems."},
                             {"role": "user", "content": user_message}
                         ]
                     )
@@ -241,7 +239,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         await conn.close()
 
-
+# function shows user's balance
 async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:

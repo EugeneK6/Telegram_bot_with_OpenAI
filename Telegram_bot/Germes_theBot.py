@@ -166,7 +166,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             async def keep_posting():
                 while keep_posting.is_posting:
                     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='upload_photo')
-                    await asyncio.sleep(5
+                    await asyncio.sleep(5)
 
             keep_posting.is_posting = True
 

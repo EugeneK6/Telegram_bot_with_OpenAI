@@ -92,10 +92,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.pin_chat_message(chat_id=chat_id, message_id=message.message_id)
     except Exception as e:
-        logger.error(f"Error pinning the message: {e}")
+        logger.error(f"Error pinning the message: {e}"
 
 
-# function create button to switch between image and text mode
 async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Switch the mode between text and image."""
     query = update.callback_query

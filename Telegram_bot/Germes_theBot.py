@@ -92,7 +92,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.pin_chat_message(chat_id=chat_id, message_id=message.message_id)
     except Exception as e:
-        logger.error(f"Error pinning the message: {e}"
+        logger.error(f"Error pinning the message: {e}")
 
 
 async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -166,7 +166,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             async def keep_posting():
                 while keep_posting.is_posting:
                     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='upload_photo')
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(5
 
             keep_posting.is_posting = True
 

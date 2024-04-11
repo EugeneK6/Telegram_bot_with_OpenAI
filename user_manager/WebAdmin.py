@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import psycopg2
 import os
 import logging
+from flask import Flask, render_template, request, redirect, url_for, flash
+import psycopg2
 from logfmter import Logfmter
 
 # Configure logging

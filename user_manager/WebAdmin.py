@@ -38,21 +38,20 @@ def get_db_connection():
 def index():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT user_id, username FROM allowed_users ORDER BY user_id")
-    allowed_users = cur.fetchall()
+    try:
+        cur.execute("SELECT user_id, username FROM allowed_users ORDER BY user_id")
+        allowed_users = cur.fetchall()
 
-    cur.execute("SELECT * FROM identified_user")
-    identified_users = cur.fetchall()
+        cur.execute("SELECT * FROM identified_user")
+        identified_users = cur.fetchall()
 
-    cur.execute("SELECT user_id, balance FROM user_credit ORDER BY user_id")
-    user_balances = cur.fetchall()
-
-    cur.close()
-    conn.close()
+        cur.execute("SELECT user_id, balance FROM user_credit ORDER BY user_id")
+        user_balances = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
     return render_template('index.html', allowed_users=allowed_users, identified_users=identified_users,
                            user_balances=user_balances)
-
-
 
 
 @app.route('/allow', methods=['POST'])
@@ -124,7 +123,7 @@ def set_balance():
         conn.close()
     return redirect(url_for('index'))
 
-# function reset user's credit to 0.00
+
 @app.route('/reset_balance/<int:user_id>', methods=['POST'])
 def reset_balance(user_id):
     app.logger.info(f'Resetting balance for user ID {user_id}')

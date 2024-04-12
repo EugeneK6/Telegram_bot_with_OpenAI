@@ -4,6 +4,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import psycopg2
 from logfmter import Logfmter
 
+log_to_file = os.getenv('LOG_TO_FILE', 'False') == 'True'
+
 # Configure logging
 formatter = Logfmter(
     keys=["at", "process", "level", "msg"],
@@ -13,12 +15,17 @@ formatter = Logfmter(
 
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
-file_handler = logging.FileHandler("./logs/user-manager.log")
-file_handler.setFormatter(formatter)
+
+enabled_handlers = [stream_handler]
+
+if log_to_file:
+    file_handler = logging.FileHandler("./logs/bot.log")
+    file_handler.setFormatter(formatter)
+    enabled_handlers.append(file_handler)
 
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[stream_handler, file_handler]
+    handlers=enabled_handlers
 )
 
 app = Flask(__name__, template_folder='templates')

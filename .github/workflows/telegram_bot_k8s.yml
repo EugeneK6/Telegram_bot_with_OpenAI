@@ -1,0 +1,51 @@
+name: Telegram Bot Kubernetes
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - 'liquibase/**'
+      - 'Telegram_bot/**'
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set commit hash
+      run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: Build bot docker image
+      run: docker build . --tag eugenek6/germes_bot:telegram_bot_${{ env.COMMIT_HASH }}
+      working-directory: ./Telegram_bot
+
+    - name: Build liquibase docker image
+      run: docker build . --tag eugenek6/germes_bot:liquibase_${{ env.COMMIT_HASH }}
+      working-directory: ./liquibase
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push the telegram docker image
+      run: docker push eugenek6/germes_bot:telegram_bot_${{ env.COMMIT_HASH }}
+
+    - name: Push the liquibase docker image
+      run: docker push eugenek6/germes_bot:liquibase_${{ env.COMMIT_HASH }}
+
+    - uses: azure/setup-kubectl@v3
+
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+        mkdir -p ~/.kube
+        mv kubeconfig ~/.kube/config
+    - name: kubectl set image
+      run: |
+        kubectl --namespace germes-the-bot set image deployment/telegram-bot telegram-bot=eugenek6/germes_bot:telegram_bot_${{ env.COMMIT_HASH }} liquibase=eugenek6/germes_bot:liquibase_${{ env.COMMIT_HASH }}

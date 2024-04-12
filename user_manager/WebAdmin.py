@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import psycopg2
 import os
 import logging
+from flask import Flask, render_template, request, redirect, url_for, flash
+import psycopg2
 from logfmter import Logfmter
 
 # Configure logging
@@ -124,7 +124,7 @@ def set_balance():
         conn.close()
     return redirect(url_for('index'))
 
-
+# function reset user's credit to 0.00
 @app.route('/reset_balance/<int:user_id>', methods=['POST'])
 def reset_balance(user_id):
     app.logger.info(f'Resetting balance for user ID {user_id}')

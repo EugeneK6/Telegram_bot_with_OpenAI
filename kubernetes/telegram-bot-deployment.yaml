@@ -15,10 +15,10 @@ spec:
     spec:
       initContainers:
         - name: liquibase
-          image: eugenek6/germes_bot:liquibase_not_in_use
+          image: eugenek6/germes_bot:liquibase_f79c551
           args: [
             "--changeLogFile=initial.postgres.yaml",
-            "--url=jdbc:postgresql://postgres:5432/bot",
+            "--url=jdbc:postgresql://postgres:5432/Germes_DB",
             "update"
           ]
           env:
@@ -45,7 +45,7 @@ spec:
 
       containers:
         - name: telegram-bot
-          image: eugenek6/germes_bot:telegram_bot_ba4877a
+          image: eugenek6/germes_bot:telegram_bot_f79c551
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -82,3 +82,9 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: IMAGE_PRICE
+            - name: SUPER_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPER_USER_ID
+

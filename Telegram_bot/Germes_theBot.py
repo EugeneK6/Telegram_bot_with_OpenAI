@@ -221,7 +221,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 response = await asyncio.get_running_loop().run_in_executor(
                     None,
                     lambda: client.chat.completions.create(
-                        model="gpt-4-turbo-preview",
+                        model="gpt-3-turbo",
                         messages=[
                             {"role": "system", "content": "You are a useful assistant for solving mathematics and cryptographic problems."},
                             {"role": "user", "content": user_message}

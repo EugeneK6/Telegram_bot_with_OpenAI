@@ -45,7 +45,7 @@ spec:
 
       containers:
         - name: telegram-bot
-          image: eugenek6/germes_bot:telegram_bot_5a89b02
+          image: eugenek6/germes_bot:telegram_bot_ba4877a
           env:
             - name: POSTGRES_USER
               valueFrom:

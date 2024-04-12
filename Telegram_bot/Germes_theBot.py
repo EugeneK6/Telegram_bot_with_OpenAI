@@ -189,15 +189,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 if hasattr(response, 'data') and len(response.data) > 0:
                     await update.message.reply_photo(photo=BytesIO(base64.b64decode(response.data[0].b64_json)))
-                    logging.info(f"Successfully generated an image for prompt: '{user_message}'")
+                    logger.info(f"Successfully generated an image for prompt: '{user_message}'")
                 else:
                     await update.message.reply_text("Sorry, the image generation did not succeed.")
-                    logging.error(f"Failed to generate image for prompt: '{user_message}'")
+                    logger.error(f"Failed to generate image for prompt: '{user_message}'")
 
             except Exception as e:
                 keep_posting.is_posting = False
                 await posting_task
-                logging.error(f"Error generating image for prompt: '{user_message}': {e}")
+                logger.error(f"Error generating image for prompt: '{user_message}': {e}")
                 await update.message.reply_text("Sorry, there was an error generating your image.")
         else:
             async def keep_typing():

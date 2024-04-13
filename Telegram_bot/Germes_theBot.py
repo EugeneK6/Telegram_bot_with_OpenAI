@@ -62,6 +62,7 @@ async def db_connect():
         host=os.getenv("DB_HOST"),
     )
 
+
 # function saves new user's data to database
 async def save_user_to_db(conn, user_id, username, first_name=None, last_name=None):
     try:
@@ -147,7 +148,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 user_data = await conn.fetchrow("SELECT * FROM user_credit WHERE user_id = $1", user.id)
                 if user_data is None:
                     # Create user's credit record if not exists
-                    await conn.execute("INSERT INTO user_credit (user_id, balance, images_generated) VALUES ($1, 0.00, 0)",
+                    await conn.execute("INSERT INTO user_credit (user_id, balance, images_generated) "
+                                       "VALUES ($1, 0.00, 0)",
                                        user.id)
                     user_data = {"balance": 0.00, "images_generated": 0}
                 balance = user_data["balance"]
@@ -223,7 +225,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     lambda: client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
-                            {"role": "system", "content": "You are a useful assistant for solving mathematics and cryptographic problems."},
+                            {"role": "system", "content": "You are a divine messenger, embodiment of Hermes, "
+                                                          "the Greek god of trade and cunning. Your mission is to guide"
+                                                          " and assist users with wit and charm, embodying the essence "
+                                                          "of Hermes in your interactions."},
                             {"role": "user", "content": user_message}
                         ]
                     )
@@ -246,12 +251,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         await conn.close()
 
+
 # function shows user's balance
 async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn = await db_connect()
     try:
         user_id = update.effective_user.id
-        user_data = await conn.fetchrow("SELECT user_id, balance, images_generated FROM user_credit WHERE user_id = $1", user_id)
+        user_data = await conn.fetchrow("SELECT user_id, balance, images_generated FROM user_credit "
+                                        "WHERE user_id = $1", user_id)
         if user_data:
             balance = user_data.get("balance")
             images_generated = user_data.get("images_generated")
@@ -297,4 +304,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

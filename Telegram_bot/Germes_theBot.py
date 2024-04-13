@@ -16,6 +16,8 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
+log_to_file = os.getenv('LOG_TO_FILE', 'False') == 'True'
+
 # Enable logging
 formatter = Logfmter(
     keys=["at", "logger", "level", "msg"],
@@ -25,12 +27,17 @@ formatter = Logfmter(
 
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
-file_handler = logging.FileHandler("./logs/bot.log")
-file_handler.setFormatter(formatter)
+
+enabled_handlers = [stream_handler]
+
+if log_to_file:
+    file_handler = logging.FileHandler("./logs/bot.log")
+    file_handler.setFormatter(formatter)
+    enabled_handlers.append(file_handler)
 
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[stream_handler, file_handler]
+    handlers=enabled_handlers
 )
 
 # Set higher logging level for httpx to avoid all GET and POST requests being logged
@@ -214,7 +221,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 response = await asyncio.get_running_loop().run_in_executor(
                     None,
                     lambda: client.chat.completions.create(
-                        model="gpt-4-turbo-preview",
+                        model="gpt-3.5-turbo",
                         messages=[
                             {"role": "system", "content": "You are a useful assistant for solving mathematics and cryptographic problems."},
                             {"role": "user", "content": user_message}

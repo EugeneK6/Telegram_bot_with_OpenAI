@@ -1,4 +1,4 @@
-name: User Manager Image CI
+name: User Manager Kubernetes
 
 on:
   pull_request:
@@ -30,3 +30,14 @@ jobs:
 
     - name: Push the Docker image
       run: docker push eugenek6/germes_bot:user_manager_${{ env.COMMIT_HASH }}
+
+      uses: azure/setup-kubectl@v3
+
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+        mkdir -p ~/.kube
+        mv kubeconfig ~/.kube/config
+    - name: kubectl set image
+      run: |
+        kubectl --namespace germes-the-bot set image deployment/user-manager user-manager=eugenek6/germes_bot:user_manager_${{ env.COMMIT_HASH }}

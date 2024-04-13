@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-bot
+  namespace: germes-the-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegram-bot
+  template:
+    metadata:
+      labels:
+        app: telegram-bot
+    spec:
+      initContainers:
+        - name: liquibase
+          image: eugenek6/germes_bot:liquibase_f79c551
+          args: [
+            "--changeLogFile=initial.postgres.yaml",
+            "--url=jdbc:postgresql://postgres:5432/Germes_DB",
+            "update"
+          ]
+          env:
+            - name: LIQUIBASE_COMMAND_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
+            - name: LIQUIBASE_COMMAND_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_DB
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_HOST
+
+      containers:
+        - name: telegram-bot
+          image: eugenek6/germes_bot:telegram_bot_f79c551
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_DB
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DB_HOST
+            - name: OPENAI_API
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: OPENAI_API
+            - name: TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: TELEGRAM_TOKEN
+            - name: IMAGE_PRICE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: IMAGE_PRICE
+            - name: SUPER_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPER_USER_ID
+

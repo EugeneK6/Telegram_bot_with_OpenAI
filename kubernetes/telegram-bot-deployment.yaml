@@ -45,7 +45,7 @@ spec:
 
       containers:
         - name: telegram-bot
-          image: eugenek6/germes_bot:telegram_bot_f79c551
+          image: eugenek6/germes_bot:telegram_bot_f1a7ba7
           ports:
             - containerPort: 5000
               name: healthcheck

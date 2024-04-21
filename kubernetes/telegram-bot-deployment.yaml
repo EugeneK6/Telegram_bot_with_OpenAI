@@ -46,6 +46,19 @@ spec:
       containers:
         - name: telegram-bot
           image: eugenek6/germes_bot:telegram_bot_f79c551
+          ports:
+            - containerPort: 5000
+              name: healthcheck
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 1
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -87,4 +100,8 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: SUPER_USER_ID
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
 

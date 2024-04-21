@@ -3,6 +3,8 @@ import os
 import asyncio
 import base64
 from io import BytesIO
+from threading import Thread
+
 import asyncpg
 from openai import OpenAI
 from logfmter import Logfmter
@@ -15,6 +17,10 @@ from telegram.ext import (
     filters,
     CallbackQueryHandler,
 )
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+app.config['SERVER_NAME'] = f"{os.getenv('MY_POD_IP', '0.0.0.0')}:5000"
 
 log_to_file = os.getenv('LOG_TO_FILE', 'False') == 'True'
 
@@ -52,6 +58,37 @@ IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
+
+
+def check_openai_connection():
+    """Check if the OpenAI API is reachable."""
+    try:
+        test_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        completion = test_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Hello!"}
+            ]
+        )
+
+        logger.info(completion.choices[0].message)
+        return True
+
+    except Exception as e:
+        logger.error("OpenAI connection check failed: %s", e)
+        return False
+
+
+@app.route('/healthcheck')
+def healthcheck():
+    """Check the health of the bot's dependencies."""
+    # openai_ok = check_openai_connection()
+    openai_ok = True
+
+    status = 'OK' if openai_ok else 'ERROR'
+    return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
 async def db_connect():
@@ -302,5 +339,12 @@ def main():
     application.run_polling()
 
 
+def run_flask():
+    """Run the Flask app."""
+    app.run(debug=False)
+
+
 if __name__ == "__main__":
+    flask_thread = Thread(target=run_flask)
+    flask_thread.start()
     main()

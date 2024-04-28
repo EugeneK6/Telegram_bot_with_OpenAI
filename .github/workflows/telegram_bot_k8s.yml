@@ -9,6 +9,7 @@ on:
     paths:
       - 'liquibase/**'
       - 'Telegram_bot/**'
+      - 'helm-charts/telegram-bot/**'
 
 jobs:
   build_and_push:
@@ -39,13 +40,22 @@ jobs:
     - name: Push the liquibase docker image
       run: docker push eugenek6/germes_bot:liquibase_${{ env.COMMIT_HASH }}
 
-    - uses: azure/setup-kubectl@v3
+    - uses: azure/setup-helm@v4.2.0
 
-    - name: Configure kubectl
+    - name: Configure kube config
       run: |
         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
         mkdir -p ~/.kube
         mv kubeconfig ~/.kube/config
-    - name: kubectl set image
+        chmod 600 ~/.kube/config
+
+    - name: helm upgrade --install
       run: |
-        kubectl --namespace germes-the-bot set image deployment/telegram-bot telegram-bot=eugenek6/germes_bot:telegram_bot_${{ env.COMMIT_HASH }} liquibase=eugenek6/germes_bot:liquibase_${{ env.COMMIT_HASH }}
+        helm \
+        --namespace germes-the-bot \
+        upgrade --install \
+        telegram-bot \
+        --set image.tag=${{ env.COMMIT_HASH }} \
+        --wait \
+        ./Telegram-bot
+      working-directory: ./helm-charts

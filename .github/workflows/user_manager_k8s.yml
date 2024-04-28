@@ -8,6 +8,7 @@ on:
       - synchronize
     paths:
       - 'user_manager/**'
+      - 'helm-charts/user-manager/**'
 
 jobs:
   build_and_push:
@@ -31,13 +32,22 @@ jobs:
     - name: Push the Docker image
       run: docker push eugenek6/germes_bot:user_manager_${{ env.COMMIT_HASH }}
 
-      uses: azure/setup-kubectl@v3
+      uses: azure/setup-helm@v4.2.0
 
     - name: Configure kubectl
       run: |
         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
         mkdir -p ~/.kube
         mv kubeconfig ~/.kube/config
+        chmod 600 ~/.kube/config
+
     - name: kubectl set image
       run: |
-        kubectl --namespace germes-the-bot set image deployment/user-manager user-manager=eugenek6/germes_bot:user_manager_${{ env.COMMIT_HASH }}
+        helm \
+        --namespace germes-the-bot \
+        upgrade --install \
+        user-manager \
+        --set image.tag=${{ env.COMMIT_HASH }} \
+        --wait \
+        ./user-manager
+      working-directory: ./helm-charts

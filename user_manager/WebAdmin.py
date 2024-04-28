@@ -60,6 +60,23 @@ def index():
     return render_template('index.html', allowed_users=allowed_users, identified_users=identified_users,
                            user_balances=user_balances)
 
+@app.route('/health')
+def health():
+    """
+    Health check endpoint.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        return "OK", 200
+    except psycopg2.Error as e:
+        return f"Error: {str(e)}", 500
+    finally:
+        cur.close()
+        conn.close()
+
 
 @app.route('/allow', methods=['POST'])
 def allow_user():

@@ -1,23 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "telegram-bot.fullname" . }}
-  labels:
-    {{- include "telegram-bot.labels" . | nindent 4 }}
+  name: telegram-bot
+  namespace: germes-the-bot
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
-      {{- include "telegram-bot.selectorLabels" . | nindent 6 }}
+      app: telegram-bot
   template:
     metadata:
       labels:
-        {{- include "telegram-bot.selectorLabels" . | nindent 8 }}
+        app: telegram-bot
     spec:
       initContainers:
         - name: liquibase
-          image: "{{ .Values.image.repository }}:liquibase_{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: eugenek6/germes_bot:liquibase_f79c551
           args: [
             "--changeLogFile=initial.postgres.yaml",
             "--url=jdbc:postgresql://postgres:5432/Germes_DB",
@@ -27,34 +25,34 @@ spec:
             - name: LIQUIBASE_COMMAND_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_USER
             - name: LIQUIBASE_COMMAND_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_DB
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: DB_HOST
+
       containers:
         - name: telegram-bot
-          image: "{{ .Values.image.repository }}:telegram_bot_{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: eugenek6/germes_bot:telegram_bot_f1a7ba7
           ports:
             - containerPort: 5000
               name: healthcheck
           readinessProbe:
             httpGet:
               path: /healthcheck
-              port: http-port
+              port: healthcheck
               scheme: HTTP
             initialDelaySeconds: 5
             timeoutSeconds: 1
@@ -65,39 +63,45 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: POSTGRES_DB
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: DB_HOST
             - name: OPENAI_API
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: OPENAI_API
             - name: TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: TELEGRAM_TOKEN
             - name: IMAGE_PRICE
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secret.name }}
+                  name: app-secrets
                   key: IMAGE_PRICE
+            - name: SUPER_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPER_USER_ID
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+

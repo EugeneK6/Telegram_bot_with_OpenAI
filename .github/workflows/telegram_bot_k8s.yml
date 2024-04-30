@@ -57,5 +57,5 @@ jobs:
         telegram-bot \
         --set image.tag=${{ env.COMMIT_HASH }} \
         --wait \
-        ./Telegram-bot
+        ./telegram-bot
       working-directory: ./helm-charts

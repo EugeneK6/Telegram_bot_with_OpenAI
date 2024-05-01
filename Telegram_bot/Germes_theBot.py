@@ -1,3 +1,6 @@
+
+"""This application contains a Telegram bot that uses OpenAI's GPT model to generate responses and images."""
+
 import logging
 import os
 import asyncio

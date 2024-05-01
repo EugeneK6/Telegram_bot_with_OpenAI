@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 from threading import Thread
 
+import httpx
 import asyncpg
 from openai import OpenAI
 from logfmter import Logfmter
@@ -48,7 +49,11 @@ logging.basicConfig(
 
 # Set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
+
+httpx_timeout = httpx.Timeout(25.0)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=httpx_timeout)
 
 """Environments"""
 client = OpenAI(api_key=os.getenv("OPENAI_API"))
@@ -63,7 +68,7 @@ modes = {}  # chat_id -> mode ("text" or "image")
 def check_openai_connection():
     """Check if the OpenAI API is reachable."""
     try:
-        test_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        test_client = OpenAI(api_key=os.getenv("OPENAI_API"))
 
         completion = test_client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -92,6 +97,7 @@ def healthcheck():
 
 
 async def db_connect():
+    """connect to the postgres database."""
     return await asyncpg.connect(
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
@@ -100,8 +106,8 @@ async def db_connect():
     )
 
 
-# function saves new user's data to database
 async def save_user_to_db(conn, user_id, username, first_name=None, last_name=None):
+    """save the user data to the database."""
     try:
         # Проверяем, есть ли пользователь уже в базе данных
         existing_user = await conn.fetchrow("SELECT user_id FROM identified_user WHERE user_id = $1", user_id)
@@ -112,14 +118,15 @@ async def save_user_to_db(conn, user_id, username, first_name=None, last_name=No
             user_id, username, first_name, last_name
         )
     except Exception as e:
-        logger.error(f"Error saving user to database: {e}")
+        logger.error("Error saving user to database: %s", e)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
     chat_id = update.effective_chat.id
-    logger.info(f"User: {user}, Chat: {chat_id} started using bot")
+    logger.info("User: %s, Chat: %s started using bot", user, chat_id)
+
 
     conn = await db_connect()
     await save_user_to_db(conn, user.id, user.username, user.first_name, user.last_name)
@@ -137,10 +144,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.pin_chat_message(chat_id=chat_id, message_id=message.message_id)
     except Exception as e:
-        logger.error(f"Error pinning the message: {e}")
+        logger.error("Error pinning the message: %s", e)
 
 
-async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def switch_mode(update: Update):
     """Switch the mode between text and image."""
     query = update.callback_query
     await query.answer()
@@ -160,6 +167,7 @@ async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """use openai api to handle messages."""
     conn = await db_connect()
     try:
 
@@ -175,10 +183,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if user.id not in user_ids:
                 await update.message.reply_text(
                     "Alas, you are not permitted to access image mod functions at this time.")
-                logger.info(f"{user.id} ({user.username}) tried to use image mod but is not allowed")
+                logger.info("%s (%s) tried to use image mod but is not allowed", user.id, user.username)
                 return
 
-            logger.info(f"User {user.id} ({user.username}) requested an image with prompt: '{user_message}'")
+            logger.info("User %s (%s) requested an image with prompt: '%s'", user.id, user.username, user_message)
 
             if not is_admin_user:
                 # Check user's credit balance
@@ -190,7 +198,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                        user.id)
                     user_data = {"balance": 0.00, "images_generated": 0}
                 balance = user_data["balance"]
-                images_generated = user_data["images_generated"]
 
                 # Check if user has enough balance for the image
                 balance = float(balance)  # Преобразование в тип float
@@ -198,7 +205,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(
                         "You have exceeded your credit limit. Please contact support for assistance."
                     )
-                    logger.info(f"User {user.id} ({user.username}) exceeded credit limit")
+                    logger.info("User %s (%s) exceeded credit limit", user.id, user.username)
                     return
 
                 async with conn.transaction():
@@ -235,15 +242,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 if hasattr(response, 'data') and len(response.data) > 0:
                     await update.message.reply_photo(photo=BytesIO(base64.b64decode(response.data[0].b64_json)))
-                    logger.info(f"Successfully generated an image for prompt: '{user_message}'")
+                    logger.info("Successfully generated an image for prompt: '%s'", user_message)
                 else:
                     await update.message.reply_text("Sorry, the image generation did not succeed.")
-                    logger.error(f"Failed to generate image for prompt: '{user_message}'")
+                    logger.error("Failed to generate image for prompt: '%s'", user_message)
 
             except Exception as e:
                 keep_posting.is_posting = False
                 await posting_task
-                logger.error(f"Error generating image for prompt: '{user_message}': {e}")
+                logger.error("Error generating image for prompt: '%s': %s", user_message, e)
                 await update.message.reply_text("Sorry, there was an error generating your image.")
         else:
             async def keep_typing():
@@ -289,8 +296,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await conn.close()
 
 
-# function shows user's balance
-async def show_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def show_balance(update: Update):
+    """show balance to user"""
     conn = await db_connect()
     try:
         user_id = update.effective_user.id
@@ -348,4 +355,3 @@ if __name__ == "__main__":
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
     main()
-

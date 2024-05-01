@@ -51,5 +51,5 @@ jobs:
 
     - name: helm upgrade --install
       run: |
-        helm --namespace germes-the-bot upgrade --install telegram-bot --set image.tag=${{ env.COMMIT_HASH }} --wait ./Telegram_bot
+        helm --namespace germes-the-bot upgrade --install telegram-bot --set image.tag=${{ env.COMMIT_HASH }} --wait ./telegram-bot
       working-directory: ./helm-charts

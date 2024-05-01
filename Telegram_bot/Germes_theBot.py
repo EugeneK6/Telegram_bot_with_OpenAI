@@ -56,7 +56,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 httpx_timeout = httpx.Timeout(25.0)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=httpx_timeout)
+client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
 client = OpenAI(api_key=os.getenv("OPENAI_API"))

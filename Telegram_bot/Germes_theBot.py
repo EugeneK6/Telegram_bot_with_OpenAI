@@ -63,7 +63,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API"))
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
-
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
 

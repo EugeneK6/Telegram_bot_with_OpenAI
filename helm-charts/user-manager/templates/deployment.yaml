@@ -33,7 +33,7 @@ spec:
             failureThreshold: 1
           env:
             - name: FLASK_APP
-              value: manager.py
+              value: WebAdmin.py
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:

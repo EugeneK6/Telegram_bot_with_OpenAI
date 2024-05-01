@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: [
             "--changeLogFile=initial.postgres.yaml",
-            "--url=jdbc:postgresql://postgres:5432/Germes_DB",
+            "--url=jdbc:postgresql://(DB_HOST):5432/(POSTGRES_DB)",
             "update"
           ]
           env:

@@ -30,6 +30,10 @@ logging.basicConfig(
     handlers=enabled_handlers
 )
 
+# Set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 

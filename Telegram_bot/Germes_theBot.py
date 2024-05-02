@@ -55,8 +55,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-httpx_timeout = httpx.Timeout(25.0)
-client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
 client = OpenAI(api_key=os.getenv("OPENAI_API"))
@@ -167,8 +165,7 @@ async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Предположим, что мы хотим сохранить текущий режим чата в базу данных
     await context.database.save_chat_mode(chat_id, modes[chat_id])
 
-    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[
-                                                                                          chat_id] == "text" else 'switch_to_text')]]
+    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[chat_id] == "text" else 'switch_to_text')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
@@ -303,7 +300,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await conn.close()
 
 
-async def show_balance(update: Update):
+async def show_balance(update: Update, _: ContextTypes.DEFAULT_TYPE):
     """show balance to user"""
     conn = await db_connect()
     try:

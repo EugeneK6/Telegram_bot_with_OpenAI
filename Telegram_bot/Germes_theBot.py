@@ -159,11 +159,13 @@ async def switch_mode(update: Update):
         text = ("The realm has shifted to Image mode. Show me your vision, "
                 "and I shall conjure forth a response of visual delight, mortal.")
         button_text = "Switch to Text Mode"
+        callback_data = 'switch_to_text'  # Corrected callback data
     else:
         modes[chat_id] = "text"
         text = "The realm has shifted to Text mode. Speak your thoughts, and I shall weave a response for you, mortal."
         button_text = "Switch to Image Mode"
-    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[chat_id] == "text" else 'switch_to_text')]]
+        callback_data = 'switch_to_image'  # Corrected callback data
+    keyboard = [[InlineKeyboardButton(button_text, callback_data=callback_data)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 

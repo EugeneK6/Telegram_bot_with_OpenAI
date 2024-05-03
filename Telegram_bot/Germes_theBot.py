@@ -52,7 +52,6 @@ logging.basicConfig(
 
 # Set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
 logger = logging.getLogger(__name__)
 
 httpx_timeout = httpx.Timeout(25.0)
@@ -61,9 +60,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 """Environments"""
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
-
-# Modes dictionary to store the mode for each chat
-modes = {}  # chat_id -> mode ("text" or "image")
 
 
 def check_openai_connection():
@@ -86,19 +82,27 @@ def check_openai_connection():
         logger.error("OpenAI connection check failed: %s", e)
         return False
 
+async def perform_health_check():
+    """Perform the health check periodically."""
+    while True:
+        await asyncio.sleep(3600)  # 3600 seconds = 1 hour
+        await check_openai_connection()
 
-@app.route('/healthcheck', methods=['GET'])
+@app.route('/healthcheck')
+def healthcheck():
+    """Check the health of the bot's dependencies."""
+    openai_ok = True
+
+    status = 'OK' if openai_ok else 'ERROR'
+    return jsonify({'status': status}), 200 if status == 'OK' else 500
+
+
+@app.route('/healthcheck')
 def healthcheck():
     """Check the health of the bot's dependencies."""
     # openai_ok = check_openai_connection()
     openai_ok = True
-
     status = 'OK' if openai_ok else 'ERROR'
-
-    # Only log when there's an issue
-    if status != 'OK':
-        logger.error("Healthcheck failed: OpenAI API is not reachable.")
-
     return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
@@ -126,6 +130,9 @@ async def save_user_to_db(conn, user_id, username, first_name=None, last_name=No
     except Exception as e:
         logger.error("Error saving user to database: %s", e)
 
+# Modes dictionary to store the mode for each chat
+modes = {}  # chat_id -> mode ("text" or "image")
+chat_states = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
@@ -153,22 +160,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error("Error pinning the message: %s", e)
 
 
-async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def switch_mode(update: Update, _: ContextTypes.DEFAULT_TYPE):
     """Switch the mode between text and image."""
     query = update.callback_query
     await query.answer()
     chat_id = update.effective_chat.id
 
-    # Accessing context to manage states
-    mode = await context.get_state(chat_id, default="text")
+    # Get the current state of the chat from the dictionary
+    mode = chat_states.get(chat_id, "text")
 
     if mode == "text":
-        await context.set_state(chat_id, "image")
+        chat_states[chat_id] = "image"
         text = ("The realm has shifted to Image mode. Show me your vision, "
                 "and I shall conjure forth a response of visual delight, mortal.")
         button_text = "Switch to Text Mode"
     else:
-        await context.set_state(chat_id, "text")
+        chat_states[chat_id] = "text"
         text = "The realm has shifted to Text mode. Speak your thoughts, and I shall weave a response for you, mortal."
         button_text = "Switch to Image Mode"
 

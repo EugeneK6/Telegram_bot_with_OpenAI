@@ -32,7 +32,7 @@ jobs:
     - name: Push the Docker image
       run: docker push eugenek6/germes_bot:user_manager_${{ env.COMMIT_HASH }}
 
-      uses: azure/setup-helm@v4.2.0
+    - uses: azure/setup-helm@v4.2.0
 
     - name: Configure kubectl
       run: |
@@ -43,11 +43,5 @@ jobs:
 
     - name: kubectl set image
       run: |
-        helm \
-        --namespace germes-the-bot \
-        upgrade --install \
-        user-manager \
-        --set image.tag=${{ env.COMMIT_HASH }} \
-        --wait \
-        ./user-manager
+        helm --namespace germes-the-bot upgrade --install user-manager --set image.tag=${{ env.COMMIT_HASH }} --wait ./user-manager
       working-directory: ./helm-charts

@@ -1,3 +1,5 @@
+"""This module manages users access and their balances via web app."""
+
 import os
 import logging
 from flask import Flask, render_template, request, redirect, url_for, flash
@@ -28,11 +30,16 @@ logging.basicConfig(
     handlers=enabled_handlers
 )
 
+# Set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 
 def get_db_connection():
+    """connect to the postgres database."""
     conn = psycopg2.connect(
         host=os.getenv("DB_HOST"),
         database=os.getenv("POSTGRES_DB"),
@@ -43,6 +50,7 @@ def get_db_connection():
 
 @app.route('/')
 def index():
+    """Renders the index page with allowed users and their balances."""
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -62,11 +70,13 @@ def index():
 
 @app.route('/health')
 def health():
-    """
-    Health check endpoint.
-    """
+    """Health check endpoint."""
     conn = get_db_connection()
     cur = conn.cursor()
+
+    healthcheck_log = logging.getLogger('werkzeug')
+    healthcheck_log.setLevel(logging.ERROR)
+
     try:
         cur.execute("SELECT 1")
         cur.fetchone()
@@ -80,8 +90,9 @@ def health():
 
 @app.route('/allow', methods=['POST'])
 def allow_user():
+    """Allows a user to access the system."""
     user_id = request.form.get('user_id')
-    app.logger.info(f'Allowing user with ID: {user_id}')
+    app.logger.info('Allowing user with ID: %s', user_id)
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -97,7 +108,7 @@ def allow_user():
             flash(f"User {user_id} has been allowed.", 'success')
     except Exception as e:
         flash(f"Error allowing user: {str(e)}", 'danger')
-        app.logger.error(f'Error allowing user: {str(e)}')
+        app.logger.error('Error allowing user: %s', e)
     finally:
         cur.close()
         conn.close()
@@ -106,8 +117,9 @@ def allow_user():
 
 @app.route('/disable', methods=['POST'])
 def disable_user():
+    """Revokes a user's access to the system."""
     user_id = request.form.get('user_id')
-    app.logger.info(f'Disabling user with ID: {user_id}')
+    app.logger.info('Disabling user with ID: %s', user_id)
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -121,7 +133,7 @@ def disable_user():
             flash(f"User {user_id} access revoked.", 'warning')
     except Exception as e:
         flash(f"Error disabling user: {str(e)}", 'danger')
-        app.logger.error(f'Error disabling user: {str(e)}')
+        app.logger.error('Error disabling user: %s', e)
     finally:
         cur.close()
         conn.close()
@@ -130,9 +142,10 @@ def disable_user():
 
 @app.route('/set_balance', methods=['POST'])
 def set_balance():
+    """Sets a user's balance to the specified amount."""
     user_id = request.form.get('user_id')
     new_balance = request.form.get('new_balance')
-    app.logger.info(f'Setting balance for user ID {user_id} to {new_balance}')
+    app.logger.info('Setting balance for user ID %s to %s', user_id, new_balance)
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -141,7 +154,7 @@ def set_balance():
         flash(f"Balance updated for user ID {user_id}.", 'success')
     except Exception as e:
         flash(f"Error updating balance: {str(e)}", 'danger')
-        app.logger.error(f'Error updating balance for user ID {user_id}: {str(e)}')
+        app.logger.error('Error updating balance for user ID %s: %s', user_id, e)
     finally:
         cur.close()
         conn.close()
@@ -150,7 +163,8 @@ def set_balance():
 
 @app.route('/reset_balance/<int:user_id>', methods=['POST'])
 def reset_balance(user_id):
-    app.logger.info(f'Resetting balance for user ID {user_id}')
+    """Resets a user's balance to zero."""
+    app.logger.info('Resetting balance for user ID %s', user_id)
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -159,7 +173,7 @@ def reset_balance(user_id):
         flash(f"Balance reset for user ID {user_id}.", 'success')
     except Exception as e:
         flash(f"Error resetting balance: {str(e)}", 'danger')
-        app.logger.error(f'Error resetting balance for user ID {user_id}: {str(e)}')
+        app.logger.error('Error resetting balance for user ID %s: %s', user_id, e)
     finally:
         cur.close()
         conn.close()

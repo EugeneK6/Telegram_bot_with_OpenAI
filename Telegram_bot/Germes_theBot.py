@@ -48,27 +48,26 @@ logging.basicConfig(
     level=logging.INFO,
     handlers=enabled_handlers
 )
-# set a higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.WARNING)
 
+# Set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 httpx_timeout = httpx.Timeout(25.0)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=httpx_timeout)
-
+client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
-client = OpenAI(api_key=os.getenv("OPENAI_API"))
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
 
+
 def check_openai_connection():
     """Check if the OpenAI API is reachable."""
     try:
-        test_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        test_client = OpenAI(api_key=os.getenv("OPENAI_API"))
 
         completion = test_client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -352,7 +351,6 @@ def run_flask():
 
 
 if __name__ == "__main__":
-
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
     main()

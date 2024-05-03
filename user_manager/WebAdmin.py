@@ -30,9 +30,12 @@ logging.basicConfig(
     handlers=enabled_handlers
 )
 
+# Set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
-
 
 
 def get_db_connection():
@@ -65,28 +68,20 @@ def index():
     return render_template('index.html', allowed_users=allowed_users, identified_users=identified_users,
                            user_balances=user_balances)
 
-
-checked_health = False  # Глобальная переменная для отслеживания проведения проверки
-
 @app.route('/health')
 def health():
     """Health check endpoint."""
-    global checked_health
-
-    if not checked_health:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute("SELECT 1")
-            cur.fetchone()
-            checked_health = True  # Помечаем, что проверка выполнена
-            return "OK", 200
-        except psycopg2.Error as e:
-            logger.error("Health check failed: Unable to connect to the database: %s", str(e))
-            return f"Error: {str(e)}", 500
-        finally:
-            cur.close()
-            conn.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        return "OK", 200
+    except psycopg2.Error as e:
+        return f"Error: {str(e)}", 500
+    finally:
+        cur.close()
+        conn.close()
 
 
 @app.route('/allow', methods=['POST'])

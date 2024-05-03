@@ -87,23 +87,22 @@ def check_openai_connection():
         return False
 
 last_healthcheck_time = 0
+openai_ok = True
 
 @app.route('/healthcheck')
 def healthcheck():
     """Check the health of the bot's dependencies."""
     global last_healthcheck_time
+    global openai_ok
 
     # Проверяем, прошел ли час с момента последней отправки health check
     if time.time() - last_healthcheck_time >= 3600:
         last_healthcheck_time = time.time()
 
-        openai_ok = True
-        status = 'OK' if openai_ok else 'ERROR'
-        return jsonify({'status': status}), 200 if status == 'OK' else 500
-    else:
-        # Возвращаем предыдущий статус
-        return jsonify({'status': 'OK'}), 200
+        openai_ok = check_openai_connection()
 
+    status = 'OK' if openai_ok else 'ERROR'
+    return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
 async def db_connect():
@@ -306,7 +305,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await conn.close()
 
 
-async def show_balance(update: Update):
+async def show_balance(update: Update, _: ContextTypes.DEFAULT_TYPE):
     """show balance to user"""
     conn = await db_connect()
     try:
@@ -365,4 +364,3 @@ if __name__ == "__main__":
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
     main()
-

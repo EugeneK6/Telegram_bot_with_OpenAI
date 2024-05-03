@@ -83,13 +83,3 @@ databaseChangeLog:
               - column:
                   name: username
                   type: varchar(255)
-  - changeSet:
-      id: 5
-      author: Eugene
-      changes:
-        - addColumn:
-            tableName: user_credit
-            columns:
-              - column:
-                  name: chat_mode
-                  type: varchar(20)

@@ -55,9 +55,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+httpx_timeout = httpx.Timeout(25.0)
+client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
-client = OpenAI(api_key=os.getenv("OPENAI_API"))
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
@@ -86,13 +87,18 @@ def check_openai_connection():
         return False
 
 
-@app.route('/healthcheck')
+@app.route('/healthcheck', methods=['GET'])
 def healthcheck():
     """Check the health of the bot's dependencies."""
     # openai_ok = check_openai_connection()
     openai_ok = True
 
     status = 'OK' if openai_ok else 'ERROR'
+
+    # Only log when there's an issue
+    if status != 'OK':
+        logger.error("Healthcheck failed: OpenAI API is not reachable.")
+
     return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
@@ -152,20 +158,22 @@ async def switch_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     chat_id = update.effective_chat.id
-    if modes.get(chat_id) == "text":
-        modes[chat_id] = "image"
+
+    # Accessing context to manage states
+    mode = await context.get_state(chat_id, default="text")
+
+    if mode == "text":
+        await context.set_state(chat_id, "image")
         text = ("The realm has shifted to Image mode. Show me your vision, "
                 "and I shall conjure forth a response of visual delight, mortal.")
         button_text = "Switch to Text Mode"
     else:
-        modes[chat_id] = "text"
+        await context.set_state(chat_id, "text")
         text = "The realm has shifted to Text mode. Speak your thoughts, and I shall weave a response for you, mortal."
         button_text = "Switch to Image Mode"
 
-    # Предположим, что мы хотим сохранить текущий режим чата в базу данных
-    await context.database.save_chat_mode(chat_id, modes[chat_id])
-
-    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[chat_id] == "text" else 'switch_to_text')]]
+    keyboard = [
+        [InlineKeyboardButton(button_text, callback_data='switch_to_image' if mode == "text" else 'switch_to_text')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 

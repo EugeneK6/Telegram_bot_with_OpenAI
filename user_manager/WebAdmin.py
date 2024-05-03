@@ -78,6 +78,7 @@ def health():
         cur.fetchone()
         return "OK", 200
     except psycopg2.Error as e:
+        logger.error("Health check failed: Unable to connect to the database: %s", str(e))
         return f"Error: {str(e)}", 500
     finally:
         cur.close()

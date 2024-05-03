@@ -68,21 +68,28 @@ def index():
     return render_template('index.html', allowed_users=allowed_users, identified_users=identified_users,
                            user_balances=user_balances)
 
+
+checked_health = False  # Глобальная переменная для отслеживания проведения проверки
+
 @app.route('/health')
 def health():
     """Health check endpoint."""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT 1")
-        cur.fetchone()
-        return "OK", 200
-    except psycopg2.Error as e:
-        logger.error("Health check failed: Unable to connect to the database: %s", str(e))
-        return f"Error: {str(e)}", 500
-    finally:
-        cur.close()
-        conn.close()
+    global checked_health
+
+    if not checked_health:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT 1")
+            cur.fetchone()
+            checked_health = True  # Помечаем, что проверка выполнена
+            return "OK", 200
+        except psycopg2.Error as e:
+            logger.error("Health check failed: Unable to connect to the database: %s", str(e))
+            return f"Error: {str(e)}", 500
+        finally:
+            cur.close()
+            conn.close()
 
 
 @app.route('/allow', methods=['POST'])

@@ -55,52 +55,15 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-httpx_timeout = httpx.Timeout(25.0)
-client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
+client = OpenAI(api_key=os.getenv("OPENAI_API"))
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
 
-
-def check_openai_connection():
-    """Check if the OpenAI API is reachable."""
-    try:
-        test_client = OpenAI(api_key=os.getenv("OPENAI_API"))
-
-        completion = test_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello!"}
-            ]
-        )
-
-        logger.info(completion.choices[0].message)
-        return True
-
-    except Exception as e:
-        logger.error("OpenAI connection check failed: %s", e)
-        return False
-
-
-def healthcheck():
-    """Check the health of the bot's dependencies."""
-    while True:
-        openai_ok = check_openai_connection()
-        status = 'OK' if openai_ok else 'ERROR'
-        logger.info(f"Health Check Status: {status}")
-        time.sleep(3600)  # Sleep for 1 hour (3600 seconds)
-
-@app.route('/healthcheck')
-def healthcheck_route():
-    """Route for health check."""
-    openai_ok = check_openai_connection()
-    status = 'OK' if openai_ok else 'ERROR'
-    return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
 async def db_connect():

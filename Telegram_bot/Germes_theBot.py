@@ -1,4 +1,3 @@
-
 """This application contains a Telegram bot that uses OpenAI's GPT model to generate responses and images."""
 
 import logging
@@ -7,6 +6,7 @@ import asyncio
 import base64
 from io import BytesIO
 from threading import Thread
+import time
 
 import httpx
 import asyncpg
@@ -52,6 +52,7 @@ logging.basicConfig(
 
 # Set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 httpx_timeout = httpx.Timeout(25.0)
@@ -60,6 +61,9 @@ client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 """Environments"""
 SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
+
+# Modes dictionary to store the mode for each chat
+modes = {}  # chat_id -> mode ("text" or "image")
 
 
 def check_openai_connection():
@@ -82,28 +86,24 @@ def check_openai_connection():
         logger.error("OpenAI connection check failed: %s", e)
         return False
 
-async def perform_health_check():
-    """Perform the health check periodically."""
-    while True:
-        await asyncio.sleep(3600)  # 3600 seconds = 1 hour
-        await check_openai_connection()
+last_healthcheck_time = 0
 
 @app.route('/healthcheck')
 def healthcheck():
     """Check the health of the bot's dependencies."""
-    openai_ok = True
+    global last_healthcheck_time
 
-    status = 'OK' if openai_ok else 'ERROR'
-    return jsonify({'status': status}), 200 if status == 'OK' else 500
+    # Проверяем, прошел ли час с момента последней отправки health check
+    if time.time() - last_healthcheck_time >= 3600:
+        last_healthcheck_time = time.time()
 
+        openai_ok = True
+        status = 'OK' if openai_ok else 'ERROR'
+        return jsonify({'status': status}), 200 if status == 'OK' else 500
+    else:
+        # Возвращаем предыдущий статус
+        return jsonify({'status': 'OK'}), 200
 
-@app.route('/healthcheck')
-def healthcheck():
-    """Check the health of the bot's dependencies."""
-    # openai_ok = check_openai_connection()
-    openai_ok = True
-    status = 'OK' if openai_ok else 'ERROR'
-    return jsonify({'status': status}), 200 if status == 'OK' else 500
 
 
 async def db_connect():
@@ -130,9 +130,6 @@ async def save_user_to_db(conn, user_id, username, first_name=None, last_name=No
     except Exception as e:
         logger.error("Error saving user to database: %s", e)
 
-# Modes dictionary to store the mode for each chat
-modes = {}  # chat_id -> mode ("text" or "image")
-chat_states = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
@@ -165,22 +162,16 @@ async def switch_mode(update: Update, _: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     chat_id = update.effective_chat.id
-
-    # Get the current state of the chat from the dictionary
-    mode = chat_states.get(chat_id, "text")
-
-    if mode == "text":
-        chat_states[chat_id] = "image"
+    if modes.get(chat_id) == "text":
+        modes[chat_id] = "image"
         text = ("The realm has shifted to Image mode. Show me your vision, "
                 "and I shall conjure forth a response of visual delight, mortal.")
         button_text = "Switch to Text Mode"
     else:
-        chat_states[chat_id] = "text"
+        modes[chat_id] = "text"
         text = "The realm has shifted to Text mode. Speak your thoughts, and I shall weave a response for you, mortal."
         button_text = "Switch to Image Mode"
-
-    keyboard = [
-        [InlineKeyboardButton(button_text, callback_data='switch_to_image' if mode == "text" else 'switch_to_text')]]
+    keyboard = [[InlineKeyboardButton(button_text, callback_data='switch_to_image' if modes[chat_id] == "text" else 'switch_to_text')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
@@ -213,10 +204,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if user_data is None:
                     # Create user's credit record if not exists
                     await conn.execute("INSERT INTO user_credit (user_id, balance, images_generated) "
-                                       "VALUES ($1, 0.00, 0)",
-                                       user.id)
+                                       "VALUES ($1, 0.00, 0)", user.id)
                     user_data = {"balance": 0.00, "images_generated": 0}
                 balance = user_data["balance"]
+
 
                 # Check if user has enough balance for the image
                 balance = float(balance)  # Преобразование в тип float
@@ -315,7 +306,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await conn.close()
 
 
-async def show_balance(update: Update, _: ContextTypes.DEFAULT_TYPE):
+async def show_balance(update: Update):
     """show balance to user"""
     conn = await db_connect()
     try:
@@ -374,3 +365,4 @@ if __name__ == "__main__":
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
     main()
+

@@ -86,21 +86,19 @@ def check_openai_connection():
         logger.error("OpenAI connection check failed: %s", e)
         return False
 
-last_healthcheck_time = 0
-openai_ok = True
 
-@app.route('/healthcheck')
 def healthcheck():
     """Check the health of the bot's dependencies."""
-    global last_healthcheck_time
-    global openai_ok
-
-    # Проверяем, прошел ли час с момента последней отправки health check
-    if time.time() - last_healthcheck_time >= 3600:
-        last_healthcheck_time = time.time()
-
+    while True:
         openai_ok = check_openai_connection()
+        status = 'OK' if openai_ok else 'ERROR'
+        logger.info(f"Health Check Status: {status}")
+        time.sleep(3600)  # Sleep for 1 hour (3600 seconds)
 
+@app.route('/healthcheck')
+def healthcheck_route():
+    """Route for health check."""
+    openai_ok = check_openai_connection()
     status = 'OK' if openai_ok else 'ERROR'
     return jsonify({'status': status}), 200 if status == 'OK' else 500
 
@@ -361,6 +359,10 @@ def run_flask():
 
 
 if __name__ == "__main__":
+    healthcheck_thread = Thread(target=healthcheck)
+    healthcheck_thread.daemon = True
+    healthcheck_thread.start()
+
     flask_thread = Thread(target=run_flask)
     flask_thread.start()
     main()

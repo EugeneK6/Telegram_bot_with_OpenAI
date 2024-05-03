@@ -91,6 +91,9 @@ def healthcheck():
     # openai_ok = check_openai_connection()
     openai_ok = True
 
+    healthcheck_log = logging.getLogger('werkzeug')
+    healthcheck_log.setLevel(logging.ERROR)
+
     status = 'OK' if openai_ok else 'ERROR'
     return jsonify({'status': status}), 200 if status == 'OK' else 500
 

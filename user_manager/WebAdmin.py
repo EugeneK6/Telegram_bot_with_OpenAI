@@ -73,6 +73,10 @@ def health():
     """Health check endpoint."""
     conn = get_db_connection()
     cur = conn.cursor()
+
+    healthcheck_log = logging.getLogger('werkzeug')
+    healthcheck_log.setLevel(logging.ERROR)
+
     try:
         cur.execute("SELECT 1")
         cur.fetchone()

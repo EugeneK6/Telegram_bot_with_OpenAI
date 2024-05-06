@@ -9,3 +9,21 @@ image:
 
 secret:
   name: app-secrets
+
+service:
+  ports:
+    - port: 5000
+      targetPort: healthcheck
+  type: ClusterIP
+
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: germes-manager-auth-secret
+    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
+  ingressClassName: nginx
+  host: germes-bot-manager.online
+  service:
+    name: user-manager
+    port:
+      number: 5000

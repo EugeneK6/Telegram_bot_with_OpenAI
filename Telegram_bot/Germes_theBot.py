@@ -349,7 +349,7 @@ def main():
 
 
 def run_flask():
-    """Run the Flask app"""
+    """Run the Flask app."""
     app.run(debug=False)
 
 

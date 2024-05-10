@@ -23,5 +23,5 @@ spec:
               number: 5000
   tls:
     - hosts:
-        - germes-bot-manager.online
+      - germes-bot-manager.online
       secretName: user-manager-germes-tls

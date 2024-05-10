@@ -59,3 +59,4 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: FLASK_SECRET_KEY
+

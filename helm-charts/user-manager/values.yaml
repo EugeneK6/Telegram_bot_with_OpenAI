@@ -21,9 +21,13 @@ ingress:
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/auth-secret: germes-manager-auth-secret
     nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   ingressClassName: nginx
   host: germes-bot-manager.online
   service:
     name: user-manager
     port:
       number: 5000
+  tls:
+    hosts: germes-bot-manager.online
+    secretName: user-manager-germes-tls

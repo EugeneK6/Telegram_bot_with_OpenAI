@@ -163,7 +163,7 @@ def set_balance():
 
 @app.route('/reset_balance/<int:user_id>', methods=['POST'])
 def reset_balance(user_id):
-    """Resets a user's balance to zero."""
+    """Resets a user's balance to zero"""
     app.logger.info('Resetting balance for user ID %s', user_id)
     conn = get_db_connection()
     cur = conn.cursor()

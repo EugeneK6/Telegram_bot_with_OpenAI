@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "user-manager.fullname" . }}
+  labels:
+    {{- include "user-manager.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "user-manager.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.service.port | default 5000 }}
+      targetPort: {{ .Values.service.targetPort | default "healthcheck" }}
+  type: {{ .Values.service.type  | default "ClusterIP" }}

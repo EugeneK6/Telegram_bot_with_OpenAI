@@ -20,11 +20,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 5000
-              name: http-port
+              name: healthcheck
           readinessProbe:
             httpGet:
               path: /health
-              port: http-port
+              port: healthcheck
               scheme: HTTP
             initialDelaySeconds: 5
             timeoutSeconds: 1
@@ -59,3 +59,4 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: FLASK_SECRET_KEY
+

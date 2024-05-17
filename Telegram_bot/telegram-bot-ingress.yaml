@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: telegram-bot-ingress
+  namespace: germes-the-bot
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: webhook.germes-bot-manager.online
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: telegram-bot
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - webhook.germes-bot-manager.online
+    secretName: telegram-bot-germes-tls

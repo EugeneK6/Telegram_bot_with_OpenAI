@@ -1,4 +1,4 @@
-python-telegram-bot==21.1.1
+python-telegram-bot[webhooks]==20.8
 openai==1.17.1
 logfmter==0.0.7
 asyncpg==0.29.0

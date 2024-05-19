@@ -115,4 +115,3 @@ databaseChangeLog:
               - column:
                   name: username
                   type: varchar(255)
-

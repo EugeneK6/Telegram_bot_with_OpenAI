@@ -359,7 +359,7 @@ def main():
 
 def run_flask():
     """Run the Flask app."""
-    app.run(debug=False) #
+    app.run(debug=False)
 
 
 if __name__ == "__main__":

@@ -9,3 +9,22 @@ image:
 
 secret:
   name: app-secrets
+
+service:
+  ports:
+    - port: 8080
+      targetPort: 80
+  type: ClusterIP
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  ingressClassName: nginx
+  host: webhook.germes-bot-manager.online
+  service:
+    name: telegram-bot
+    port:
+      number: 8080
+  tls:
+    hosts: webhook.germes-bot-manager.online
+    secretName: telegram-bot-germes-tls

@@ -41,7 +41,7 @@ jobs:
         mv kubeconfig ~/.kube/config
         chmod 600 ~/.kube/config
 
-    - name: kubectl set image
+    - name: helm upgrade --install
       run: |
         helm --namespace germes-the-bot upgrade --install user-manager --set image.tag=${{ env.COMMIT_HASH }} --wait ./user-manager
       working-directory: ./helm-charts

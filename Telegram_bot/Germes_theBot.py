@@ -345,12 +345,21 @@ def main():
     application.add_handler(CallbackQueryHandler(switch_mode, pattern='^switch_to_(text|image)$'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    application.run_polling()
+    # application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=80,
+        secret_token= os.getenv("SECRET_TOKEN"),
+        allowed_updates=Update.ALL_TYPES,
+        webhook_url="https://webhook.germes-bot-manager.online/",
+
+    )
 
 
 def run_flask():
     """Run the Flask app."""
-    app.run(debug=False) #.
+    app.run(debug=False)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "user-manager.fullname" . }}
+  name: {{ include "telegram-bot.fullname" . }}
   labels:
-    {{- include "user-manager.labels" . | nindent 4 }}
+    {{- include "telegram-bot.labels" . | nindent 4 }}
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
     {{ $key }}: {{ $value | quote }}
@@ -25,4 +25,3 @@ spec:
   - hosts:
     - {{ .Values.ingress.tls.hosts}}
     secretName: {{ .Values.ingress.tls.secretName}}
-

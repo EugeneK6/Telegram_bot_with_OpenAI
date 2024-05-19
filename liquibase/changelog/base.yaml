@@ -2,6 +2,11 @@ databaseChangeLog:
   - changeSet:
       id: 1
       author: Eugene
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: allowed_users
       changes:
         - createTable:
             tableName: allowed_users
@@ -16,6 +21,11 @@ databaseChangeLog:
   - changeSet:
       id: 2
       author: Eugene
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: user_credit
       changes:
         - createTable:
             tableName: user_credit
@@ -47,6 +57,11 @@ databaseChangeLog:
   - changeSet:
       id: 3
       author: Eugene
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            tableExists:
+              tableName: identified_user
       changes:
         - createTable:
             tableName: identified_user
@@ -70,6 +85,12 @@ databaseChangeLog:
   - changeSet:
       id: 4
       author: Eugene
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: allowed_users
+              columnName: username
       changes:
         - addColumn:
             tableName: allowed_users
@@ -77,9 +98,21 @@ databaseChangeLog:
               - column:
                   name: username
                   type: varchar(255)
+
+  - changeSet:
+      id: 5
+      author: Eugene
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            columnExists:
+              tableName: user_credit
+              columnName: username
+      changes:
         - addColumn:
             tableName: user_credit
             columns:
               - column:
                   name: username
                   type: varchar(255)
+

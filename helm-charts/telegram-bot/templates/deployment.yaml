@@ -104,6 +104,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: IMAGE_PRICE
+            - name: SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: SECRET_TOKEN
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:

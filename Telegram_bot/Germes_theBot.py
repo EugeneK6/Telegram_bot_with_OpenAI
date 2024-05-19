@@ -350,7 +350,7 @@ def main():
     application.run_webhook(
         listen="0.0.0.0",
         port=80,
-        secret_token="MercurialWhispers",
+        secret_token= os.getenv("SECRET_TOKEN"),
         allowed_updates=Update.ALL_TYPES,
         webhook_url="https://webhook.germes-bot-manager.online/",
 

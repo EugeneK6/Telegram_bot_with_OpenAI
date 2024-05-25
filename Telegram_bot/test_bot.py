@@ -3,7 +3,7 @@
 
 import unittest
 from unittest.mock import patch, Mock
-from Germes_theBot import check_openai_connection, handle_message, start, db_connect, save_user_to_db
+from Germes_theBot import check_openai_connection, handle_message, start, db_connect, modes
 
 class TestOpenAIConnection(unittest.TestCase):
     """Unit tests for checking the OpenAI connection."""

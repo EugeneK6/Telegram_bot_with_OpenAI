@@ -64,10 +64,10 @@ IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 modes = {}  # chat_id -> mode ("text" or "image")
 
 
-def check_openai_connection():
+def check_openai_connection(api_key=os.getenv("OPENAI_API")):
     """Check if the OpenAI API is reachable."""
     try:
-        test_client = OpenAI(api_key=os.getenv("OPENAI_API"))
+        test_client = OpenAI(api_key=api_key)
 
         completion = test_client.chat.completions.create(
             model="gpt-3.5-turbo",

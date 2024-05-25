@@ -78,7 +78,7 @@ services:
     depends_on:
       - postgres
 
-  user-management:
+  user-manager:
     build:
       context: ./user_manager
     environment:

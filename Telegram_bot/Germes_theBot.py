@@ -57,7 +57,7 @@ httpx_timeout = httpx.Timeout(25.0)
 client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
-SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
+SUPER_USER_ID = os.getenv("SUPER_USER_ID")
 IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
 
 # Modes dictionary to store the mode for each chat
@@ -181,7 +181,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user = update.effective_user
             allowed_users_dict = await conn.fetch("SELECT user_id FROM allowed_users ORDER BY user_id")
             user_ids = [int(user['user_id']) for user in allowed_users_dict]
-            is_admin_user = user.id == int(SUPER_USER_ID)
+            is_admin_user = user.id == SUPER_USER_ID
             if user.id not in user_ids:
                 await update.message.reply_text(
                     "Alas, you are not permitted to access image mod functions at this time.")
@@ -308,7 +308,7 @@ async def show_balance(update: Update, _: ContextTypes.DEFAULT_TYPE):
         if user_data:
             balance = user_data.get("balance")
             images_generated = user_data.get("images_generated")
-            is_admin_user = user_id == int(SUPER_USER_ID)
+            is_admin_user = user_id == SUPER_USER_ID
 
             if balance is not None:
                 if is_admin_user:

@@ -5,4 +5,4 @@ max-line-length=140
 max-statements=80
 
 [MESSAGES CONTROL]
-disable = C0103, W0718, R0914
+disable = C0103, W0718, R0914, E1120

@@ -57,17 +57,14 @@ class TestSwitchMode(unittest.TestCase):
                     date=None,
                     chat=Chat(id=123456, type="private"),
                     text="test"
-                ),
-                application=None  # Добавьте аргумент application здесь, если это необходимо
-            ),
-            application=None  # Добавьте аргумент application здесь, если это необходимо
+                )
+            )
         )
         context = ContextTypes.DEFAULT_TYPE()
 
         await switch_mode(update, context)
         self.assertEqual(modes[123456], "image")
 
-    @patch('Germes_theBot.modes', {})
     async def test_switch_mode_to_text(self):
         """Test switching mode to text."""
         modes[123456] = "image"
@@ -83,10 +80,8 @@ class TestSwitchMode(unittest.TestCase):
                     date=None,
                     chat=Chat(id=123456, type="private"),
                     text="test"
-                ),
-                application=None  # Добавьте аргумент application здесь, если это необходимо
-            ),
-            application=None  # Добавьте аргумент application здесь, если это необходимо
+                )
+            )
         )
         context = ContextTypes.DEFAULT_TYPE()
 
@@ -115,8 +110,7 @@ class TestShowBalance(unittest.TestCase):
                 chat=Chat(id=123456, type="private"),
                 from_user=User(id=123456, first_name="Test", is_bot=False),
                 text="/balance"
-            ),
-            application=None  # Добавьте аргумент application здесь, если это необходимо
+            )
         )
         context = ContextTypes.DEFAULT_TYPE()
 

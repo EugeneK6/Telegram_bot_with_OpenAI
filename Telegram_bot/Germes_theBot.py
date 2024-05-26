@@ -57,17 +57,17 @@ httpx_timeout = httpx.Timeout(25.0)
 client = OpenAI(api_key=os.getenv("OPENAI_API"), timeout=httpx_timeout)
 
 """Environments"""
-SUPER_USER_ID = int(os.getenv("SUPER_USER_ID"))
-IMAGE_PRICE = float(os.getenv("IMAGE_PRICE"))
+SUPER_USER_ID = os.getenv("SUPER_USER_ID")
+IMAGE_PRICE = os.getenv("IMAGE_PRICE")
 
 # Modes dictionary to store the mode for each chat
 modes = {}  # chat_id -> mode ("text" or "image")
 
 
-def check_openai_connection():
+def check_openai_connection(api_key=os.getenv("OPENAI_API")):
     """Check if the OpenAI API is reachable."""
     try:
-        test_client = OpenAI(api_key=os.getenv("OPENAI_API"))
+        test_client = OpenAI(api_key=api_key)
 
         completion = test_client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -203,7 +203,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 # Check if user has enough balance for the image
                 balance = float(balance)  # Преобразование в тип float
-                if balance + IMAGE_PRICE > 10.00:
+                if balance + float(IMAGE_PRICE) > 10.00:
                     await update.message.reply_text(
                         "You have exceeded your credit limit. Please contact support for assistance."
                     )
@@ -214,7 +214,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await conn.execute(
                         "UPDATE user_credit SET balance = balance + $1, images_generated = images_generated + 1 "
                         "WHERE user_id = $2",
-                        IMAGE_PRICE, user.id
+                        float(IMAGE_PRICE), user.id
                     )
 
             # Generate and send the image

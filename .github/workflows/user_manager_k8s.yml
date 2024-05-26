@@ -11,10 +11,40 @@ on:
       - 'helm-charts/user-manager/**'
 
 jobs:
-  build_and_push:
+  test_build_push:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
+    - name: Populate .env file
+      run: |
+        touch .env
+        echo "${{ secrets.FULL_ENV }}" >> .env
+
+    - name: Run unit tests
+      run: |
+        docker compose up -d postgres
+        docker compose up liquibase
+        docker compose run --build --rm user-manager python test_webAdmin.py
+
+    - name: Set up Python 3.9 for pylint
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+
+    - name: Install pylint
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+
+    - name: Install dependencies for pylint
+      run: |
+        pip install -r requirements.txt
+      working-directory: ./user_manager
+
+    - name: Analysing the code with pylint
+      run: |
+        pylint ./user_manager
 
     - name: Set commit hash
       run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
@@ -34,7 +64,7 @@ jobs:
 
     - uses: azure/setup-helm@v4.2.0
 
-    - name: Configure kubectl
+    - name: Configure kube config
       run: |
         echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
         mkdir -p ~/.kube

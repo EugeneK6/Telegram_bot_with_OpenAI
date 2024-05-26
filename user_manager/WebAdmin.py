@@ -38,13 +38,19 @@ app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 
-def get_db_connection():
-    """connect to the postgres database."""
-    conn = psycopg2.connect(
+def get_db_connection(
         host=os.getenv("DB_HOST"),
         database=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"))
+        password=os.getenv("POSTGRES_PASSWORD")
+):
+    """connect to the postgres database."""
+    conn = psycopg2.connect(
+        host=host,
+        database=database,
+        user=user,
+        password=password
+    )
     return conn
 
 
@@ -177,7 +183,7 @@ def reset_balance(user_id):
     finally:
         cur.close()
         conn.close()
-    return redirect(url_for('index'))
+    return redirect(url_for('index'))#
 
 
 if __name__ == '__main__':

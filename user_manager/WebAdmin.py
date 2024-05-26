@@ -183,7 +183,7 @@ def reset_balance(user_id):
     finally:
         cur.close()
         conn.close()
-    return redirect(url_for('index'))
+    return redirect(url_for('index'))#
 
 
 if __name__ == '__main__':

@@ -24,6 +24,7 @@ class TestSaveUserToDB(unittest.TestCase):
 
     @patch('Germes_theBot.db_connect', new_callable=AsyncMock)
     async def test_save_user_to_db(self, mock_db_connect):
+        """Test saving user to the database."""
         mock_conn = AsyncMock()
         mock_db_connect.return_value = mock_conn
 
@@ -43,6 +44,7 @@ class TestSwitchMode(unittest.TestCase):
 
     @patch('Germes_theBot.modes', {})
     async def test_switch_mode_to_image(self):
+        """Test switching mode to image."""
         update = Update(
             update_id=1,
             callback_query=CallbackQuery(
@@ -64,6 +66,7 @@ class TestSwitchMode(unittest.TestCase):
         self.assertEqual(modes[123456], "image")
 
     async def test_switch_mode_to_text(self):
+        """Test switching mode to text."""
         modes[123456] = "image"
         update = Update(
             update_id=1,
@@ -90,6 +93,7 @@ class TestShowBalance(unittest.TestCase):
 
     @patch('Germes_theBot.db_connect', new_callable=AsyncMock)
     async def test_show_balance(self, mock_db_connect):
+        """Test showing user balance."""
         mock_conn = AsyncMock()
         mock_db_connect.return_value = mock_conn
         mock_conn.fetchrow.return_value = {
@@ -112,8 +116,8 @@ class TestShowBalance(unittest.TestCase):
 
         await show_balance(update, context)
         update.message.reply_text.assert_called_once_with(
-            f"Behold, mortal! Your credit balance stands at $5.00/10$, "
-            f"with 3 images already conjured forth from the depths of imagination."
+            "Behold, mortal! Your credit balance stands at $5.00/10$, "
+            "with 3 images already conjured forth from the depths of imagination."
         )
 
 if __name__ == '__main__':
